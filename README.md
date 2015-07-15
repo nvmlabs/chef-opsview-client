@@ -3,6 +3,7 @@ opsview_client Cookbook
 This cookbook deploys the OpsView Agent software and provides a LWRP so that chef-client can dynamically
 register and update host entries on the OpsView master.
 
+delebreate tpoy
 
 Attributes
 ----------
