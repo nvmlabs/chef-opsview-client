@@ -19,8 +19,8 @@
 
 require 'json'
 
-@errorOccurred = false
-#use_inline_resources if defined?(use_inline_resources)
+@error_occurred = false
+# use_inline_resources if defined?(use_inline_resources)
 
 action :add do
   new_resource.updated_by_last_action(do_add_or_update(:add))
@@ -39,35 +39,33 @@ def do_add_or_update(resource_action)
 
   if @current_resource.json_data.nil?
     if resource_action == :update
-      Chef::Log.info( "#{@new_resource.name} is not registered - skipping.")
+      Chef::Log.info("#{@new_resource.name} is not registered - skipping.")
       return false
     else
-      Chef::Log.info( "#{@new_resource.name} is not registered - creating new registration.")
-      @new_resource.json_data(new_registration())
+      Chef::Log.info("#{@new_resource.name} is not registered - creating new registration.")
+      @new_resource.json_data(new_registration)
       do_update = true
     end
+  elsif resource_action == :add
+    Chef::Log.info("#{@new_resource.name} is already registered - skipping.")
+    return false
   else
-    if resource_action == :add 
-      Chef::Log.info( "#{@new_resource.name} is already registered - skipping.")
-      return false
-    else
-      Chef::Log.debug("current_resource Before update_host_details: #{@current_resource.json_data.inspect}")
-      @new_resource.json_data(update_host_details(@current_resource.json_data))
-      Chef::Log.debug("new_resource After update_host_details: #{@new_resource.json_data.inspect}")
-      json_diff = HashDiff.diff(@current_resource.json_data, @new_resource.json_data)
-      do_update = json_diff.size > 0 ? true : false
-      Chef::Log.info( "#{@new_resource.name} updated: #{do_update} diff: #{json_diff.inspect}")
-    end 
+    Chef::Log.debug("current_resource Before update_host_details: #{@current_resource.json_data.inspect}")
+    @new_resource.json_data(update_host_details(@current_resource.json_data))
+    Chef::Log.debug("new_resource After update_host_details: #{@new_resource.json_data.inspect}")
+    json_diff = HashDiff.diff(@current_resource.json_data, @new_resource.json_data)
+    do_update = !json_diff.empty? ? true : false
+    Chef::Log.info("#{@new_resource.name} updated: #{do_update} diff: #{json_diff.inspect}")
   end
 
   if do_update
     put_opsview_device
 
     if @new_resource.reload_opsview
-      Chef::Log.info( "Configured to reload opsview")
+      Chef::Log.info('Configured to reload opsview')
       do_reload_opsview
     else
-      Chef::Log.info( "Configured NOT to reload opsview" )
+      Chef::Log.info('Configured NOT to reload opsview')
     end
   end
 
@@ -75,8 +73,8 @@ def do_add_or_update(resource_action)
 end
 
 def new_registration
-  node_json = { }
-  node['opsview']['default_node'].each_pair do |key,value|
+  node_json = {}
+  node['opsview']['default_node'].each_pair do |key, value|
     node_json[key] = value
   end
 
@@ -85,206 +83,181 @@ end
 
 def update_host_details(original_json)
   node_json = Marshal.load(Marshal.dump(original_json))
-  node_json["name"] = @new_resource.device_title
-  node_json["ip"] = @new_resource.ip
+  node_json['name'] = @new_resource.device_title
+  node_json['ip'] = @new_resource.ip
 
-  if not @new_resource.hostalias.to_s.empty?
-    node_json["alias"] = @new_resource.hostalias
+  unless @new_resource.hostalias.to_s.empty?
+    node_json['alias'] = @new_resource.hostalias
   end
 
-  if node_json["hostgroup"]["name"] != @new_resource.hostgroup
-    node_json["hostgroup"] = { "name" => @new_resource.hostgroup }
+  if node_json['hostgroup']['name'] != @new_resource.hostgroup
+    node_json['hostgroup'] = { 'name' => @new_resource.hostgroup }
   end
 
-  if node_json["hosttemplates"].nil?
-    node_json["hosttemplates"] = []
-  end
-  node_json["hosttemplates"].synchronise_array_by_key(@new_resource.hosttemplates, 'name') 
+  node_json['hosttemplates'] = [] if node_json['hosttemplates'].nil?
+  node_json['hosttemplates'].synchronise_array_by_key(@new_resource.hosttemplates, 'name')
 
-  if not @new_resource.monitored_by.to_s.empty?
-    if node_json["monitored_by"]["name"] != @new_resource.monitored_by
-      node_json["monitored_by"] = { "name" => @new_resource.monitored_by }
+  unless @new_resource.monitored_by.to_s.empty?
+    if node_json['monitored_by']['name'] != @new_resource.monitored_by
+      node_json['monitored_by'] = { 'name' => @new_resource.monitored_by }
     end
   end
 
-  if node_json["keywords"].nil?
-    node_json["keywords"] = []
-  end
-  node_json["keywords"].synchronise_array_by_key(@new_resource.keywords, 'name')
+  node_json['keywords'] = [] if node_json['keywords'].nil?
+  node_json['keywords'].synchronise_array_by_key(@new_resource.keywords, 'name')
 
-  if node_json["hostattributes"].nil?
-    node_json["hostattributes"] = []
-  end
-  node_json["hostattributes"].synchronise_hash_by_key(get_host_attributes(), 'name')
+  node_json['hostattributes'] = [] if node_json['hostattributes'].nil?
+  node_json['hostattributes'].synchronise_hash_by_key(get_host_attributes, 'name')
 
   node_json
 end
 
-def get_host_attributes
+def host_attributes
   host_attributes = []
-  node['filesystem'].each_pair do |fs,opts|
-    if opts.attribute?('fs_type') and not node['opsview']['exclude_fs_type'].include?(opts['fs_type'])
-      if not opts['mount'].to_s.empty?
-        host_attributes << { "name" => "DISK", "value" => opts['mount'].gsub(':', '') }
-      end
+  node['filesystem'].each_pair do |_fs, opts|
+    next unless opts.attribute?('fs_type') && !node['opsview']['exclude_fs_type'].include?(opts['fs_type'])
+    unless opts['mount'].to_s.empty?
+      host_attributes << { 'name' => 'DISK', 'value' => opts['mount'].delete(':') }
     end
   end
 
   if node['opsview']['optional_attributes'].include?('MAC')
-    host_attributes << { "name" => "MAC", "value" => node['macaddress'].gsub(':', '-') }
+    host_attributes << { 'name' => 'MAC', 'value' => node['macaddress'].tr(':', '-') }
   end
 
   if node['opsview']['optional_attributes'].include?('CHEFSERVER')
-    host_attributes << { "name" => "CHEFSERVER", "value" => node.environment, "arg1" => Chef::Config[:chef_server_url] }
+    host_attributes << { 'name' => 'CHEFSERVER', 'value' => node.environment, 'arg1' => Chef::Config[:chef_server_url] }
   end
-  
-  return host_attributes
-end
 
+  host_attributes
+end
 
 # Check the OpsView Server to see the current state of the
 # Device
 def load_current_resource
-
   @current_resource = Chef::Resource::OpsviewClient.new(@new_resource.name)
 
-  get_opsview_token()
+  get_opsview_token
 
-  @current_resource.json_data(get_opsview_device())
+  @current_resource.json_data(get_opsview_device)
   if @current_resource.json_data.nil?
-    Chef::Log.info( "#{@new_resource.name} is not currently registered with OpsView" )
+    Chef::Log.info("#{@new_resource.name} is not currently registered with OpsView")
   else
-    Chef::Log.debug( "Retrieved current details for #{@new_resource.name} from OpsView" )
+    Chef::Log.debug("Retrieved current details for #{@new_resource.name} from OpsView")
   end
 end
-  
+
 def api_url
   n = @new_resource
-  url = "#{n.api_protocol}://#{n.api_host}:#{n.api_port}/rest"
+  "#{n.api_protocol}://#{n.api_host}:#{n.api_port}/rest"
 end
 
-def get_opsview_token
+def opsview_token
   require 'rest-client'
 
-  Chef::Log.debug("Fetching Opsview token")
-  post_body = { "username" => @new_resource.api_user,
-                "password" => @new_resource.api_password }.to_json
+  Chef::Log.debug('Fetching Opsview token')
+  post_body = { 'username' => @new_resource.api_user,
+                'password' => @new_resource.api_password }.to_json
 
-  url = [ api_url(), "login" ].join("/")
+  url = [api_url, 'login'].join('/')
 
-  Chef::Log.debug( "Using Opsview url: " + url )
-  Chef::Log.debug( "using post: username:" + @new_resource.api_user + " password:" + @new_resource.api_password.gsub(/\w/,'x') )
+  Chef::Log.debug('Using Opsview url: ' + url)
+  Chef::Log.debug('using post: username:' + @new_resource.api_user + ' password:' + @new_resource.api_password.gsub(/\w/, 'x'))
 
   begin
-    response = RestClient.post url, post_body, :content_type => :json
+    response = RestClient.post url, post_body, content_type: :json
   rescue
-    @errorOccurred = true
-    Chef::Log.fatal( "Problem getting token from Opsview server; " + $!.inspect )
-    raise "Unable to authenticate with OpsView Rest API: " + $!.inspect
+    @error_occured = true
+    Chef::Log.fatal('Problem getting token from Opsview server; ' + $ERROR_INFO.inspect)
+    raise 'Unable to authenticate with OpsView Rest API: ' + $ERROR_INFO.inspect
   end
 
   case response.code
   when 200
-    Chef::Log.debug( "Response code: 200" )
+    Chef::Log.debug('Response code: 200')
   else
-    Chef::Log.fatal( "Unable to log in to Opsview server; HTTP code " + response.code )
-    raise "Error authenticating OpsView Rest API: " + response
+    Chef::Log.fatal('Unable to log in to Opsview server; HTTP code ' + response.code)
+    raise 'Error authenticating OpsView Rest API: ' + response
   end
 
   received_token = JSON.parse(response)['token']
-  Chef::Log.debug( "Got token: " + received_token )
+  Chef::Log.debug('Got token: ' + received_token)
   @new_resource.api_token(received_token)
 end
 
-def get_opsview_device
+def opsview_device
   require 'rest-client'
+  raise 'OpsView Rest API token missing' if @new_resource.api_token.nil?
+  raise 'Did not specify a node to look up.' if @new_resource.name.nil?
 
-  if @new_resource.api_token.nil? 
-    raise "OpsView Rest API token missing"
-  end
+  url = URI.escape([api_url, "config/host?json_filter={\"name\": {\"-like\": \"#{@new_resource.name}\"}}"].join('/'))
 
-  if @new_resource.name.nil?
-    raise "Did not specify a node to look up."
-  else
-    url = URI.escape( [ api_url(), "config/host?json_filter={\"name\": {\"-like\": \"#{@new_resource.name}\"}}" ].join("/") ) 
+  begin
+    response = RestClient.get url, x_opsview_username: @new_resource.api_user,
+                                   x_opsview_token: @new_resource.api_token,
+                                   content_type: :json,
+                                   accept: :json
+  rescue
+    raise 'RestClient.get OpsView Rest API error: ' + $ERROR_INFO.inspect
   end
 
   begin
-    response = RestClient.get url, :x_opsview_username => @new_resource.api_user, 
-                                   :x_opsview_token => @new_resource.api_token, 
-                                   :content_type => :json, 
-                                   :accept => :json
+    response_json = JSON.parse(response)
   rescue
-    raise "RestClient.get OpsView Rest API error: " + $!.inspect
+    raise 'Could not parse the JSON response from Opsview: ' + response
   end
 
-  begin
-    responseJson = JSON.parse(response)
-  rescue
-    raise "Could not parse the JSON response from Opsview: " + response
-  end
-
-  obj = responseJson['list'][0]
-
-  obj
+  response_json['list'][0]
 end
 
 def put_opsview_device
   require 'rest-client'
 
-  if @errorOccurred 
-    Chef::Log.warn( "put: Problem talking to Opsview server; ignoring Opsview config" )
+  if @error_occured
+    Chef::Log.warn('put: Problem talking to Opsview server; ignoring Opsview config')
     return
   end
 
-  url = [ api_url(), "config/host" ].join("/")
-  Chef::Log.debug("RestClient.put " + url + " : " + @new_resource.json_data.to_json)
+  url = [api_url, 'config/host'].join('/')
+  Chef::Log.debug('RestClient.put ' + url + ' : ' + @new_resource.json_data.to_json)
   begin
-    response = RestClient.put url, @new_resource.json_data.to_json, 
-                              :x_opsview_username => @new_resource.api_user, 
-                              :x_opsview_token => @new_resource.api_token, 
-                              :content_type => :json, 
-                              :accept => :json
+    response = RestClient.put url, @new_resource.json_data.to_json,
+                              x_opsview_username: @new_resource.api_user,
+                              x_opsview_token: @new_resource.api_token,
+                              content_type: :json,
+                              accept: :json
   rescue
-    Chef::Log.fatal( "Problem sending device data to Opsview server; " + $!.inspect + "\n====\n" + url + "\n====\n" + @new_resource.json_data.to_json )
-    raise "RestClient.put OpsView Rest API errored: " + $!.inspect 
+    Chef::Log.fatal('Problem sending device data to Opsview server; ' + $ERROR_INFO.inspect + "\n====\n" + url + "\n====\n" + @new_resource.json_data.to_json)
+    raise 'RestClient.put OpsView Rest API errored: ' + $ERROR_INFO.inspect
   end
-
-  begin
-    responseJson = JSON.parse(response)
-  rescue
-    raise "OpsView Rest API response is invalid: " + response
-  end
-
-  Chef::Log.debug("RestClient.put response: " + response)
+  Chef::Log.debug('RestClient.put response: ' + response)
 end
 
 def do_reload_opsview
   require 'rest-client'
 
-  url = [ api_url(), "reload?asynchronous=1" ].join("/")
+  url = [api_url, 'reload?asynchronous=1'].join('/')
 
-  Chef::Log.info( "Performing Opsview reload" )
+  Chef::Log.info('Performing Opsview reload')
 
   begin
-    response = RestClient.post url, '', :x_opsview_username => @new_resource.api_user, 
-                                        :x_opsview_token => @new_resource.api_token, 
-                                        :content_type => :json, 
-                                        :accept => :json
+    response = RestClient.post url, '', x_opsview_username: @new_resource.api_user,
+                                        x_opsview_token: @new_resource.api_token,
+                                        content_type: :json,
+                                        accept: :json
   rescue
-    Chef::Log.warn( "Unable to reload Opsview: " + $!.inspect )
+    Chef::Log.warn('Unable to reload Opsview: ' + $ERROR_INFO.inspect)
     return
   end
 
   case response.code
   when 200
-    Chef::Log.debug( "Reloaded Opsview" )
+    Chef::Log.debug('Reloaded Opsview')
   when 401
-    raise "Login failed: " + response.code
+    raise 'Login failed: ' + response.code
   when 409
-    Chef::Log.info( "Opsview reload already in progress" )
+    Chef::Log.info('Opsview reload already in progress')
   else
-    raise "Was not able to reload Opsview: HTTP code: " + response.code
+    raise 'Was not able to reload Opsview: HTTP code: ' + response.code
   end
 end
-

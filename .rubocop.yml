@@ -1,0 +1,17 @@
+Metrics/LineLength:
+  Max: 120
+
+Style/FileName:
+  Enabled: false
+
+AllCops:
+  TargetRubyVersion: 2.3
+
+AllCops:
+  Exclude:
+    - .kitchen/**/*
+    - Guardfile
+    - metadata.rb
+    - spec/unit/test_spec.rb
+
+

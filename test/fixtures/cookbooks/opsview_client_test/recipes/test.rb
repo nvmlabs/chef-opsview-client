@@ -17,13 +17,13 @@
 # limitations under the License.
 #
 
-include_recipe "opsview_client"
+include_recipe 'opsview_client'
 
-opsview_client node['fqdn'] do 
+opsview_client node['fqdn'] do
   api_user     node['opsview_client_test']['user']
   api_password node['opsview_client_test']['password']
   api_host     node['opsview_client_test']['host']
-  api_protocol node['opsview_client_test']['protocol'] 
+  api_protocol node['opsview_client_test']['protocol']
   api_port     node['opsview_client_test']['port']
   ip           node['ipaddress']
   hostgroup    node['opsview_client_test']['hostgroup']
@@ -31,4 +31,3 @@ opsview_client node['fqdn'] do
   hosttemplates node['opsview_client_test']['hosttemplates']
   reload_opsview node['opsview_client_test']['reload_opsview']
 end
-

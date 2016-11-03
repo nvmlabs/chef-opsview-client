@@ -7,5 +7,5 @@ default['opsview_client_test']['password'] = 'passw0rd'
 default['opsview_client_test']['reload_opsview'] = false
 
 default['opsview_client_test']['hostgroup'] = 'Test_Hostgroup'
-default['opsview_client_test']['hosttemplates'] = [ "Network - Base" ]
+default['opsview_client_test']['hosttemplates'] = ['Network - Base']
 default['opsview_client_test']['hostalias'] = 'Chef client test'

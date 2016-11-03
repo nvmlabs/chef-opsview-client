@@ -4,12 +4,12 @@ driver:
 
 provisioner:
   name: chef_zero
-  require_chef_omnibus: true
 
 platforms:
-- name: ubuntu-12.04
-- name: centos-6.6
-- name: win2012
+  - name: ubuntu-12.04
+  - name: centos-6.8
+  - name: centos-7
+  - name: windows2012r2
 
 suites:
 - name: client

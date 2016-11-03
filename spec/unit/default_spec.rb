@@ -9,6 +9,5 @@ describe 'opsview_client::default' do
 
   it 'installs hashdiff gem' do
     expect(chef_run).to install_chef_gem('hashdiff')
-  end 
-
+  end
 end

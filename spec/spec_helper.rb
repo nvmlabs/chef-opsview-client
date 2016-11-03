@@ -5,11 +5,11 @@ require 'webmock/rspec/matchers'
 
 WebMock.disable_net_connect!(allow_localhost: true)
 
-if defined?(ChefSpec::SoloRunner)
-  CHEFSPEC_RUNNER = ChefSpec::SoloRunner
-else
-  CHEFSPEC_RUNNER = ChefSpec::Runner
-end
+CHEFSPEC_RUNNER = if defined?(ChefSpec::SoloRunner)
+                    ChefSpec::SoloRunner
+                  else
+                    ChefSpec::Runner
+                  end
 
 RSpec.configure do |config|
   config.expect_with :rspec do |c|
@@ -21,7 +21,7 @@ RSpec.configure do |config|
   config.include WebMock::Matchers
 
   # Specify the Chef log_level (default: :warn)
-  #config.log_level = :info
+  # config.log_level = :info
 end
 
 at_exit { ChefSpec::Coverage.report! }
