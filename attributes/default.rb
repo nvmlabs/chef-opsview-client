@@ -17,14 +17,6 @@
 # limitations under the License.
 #
 
-default['opsview']['server_url'] = 'uat.opsview.com'
-default['opsview']['server_port'] = '443'
-default['opsview']['server_protocol'] = 'https'
-
-default['opsview']['hosttemplates'] = ['Network - Base']
-
-default['opsview']['reload_opsview'] = true
-
 default['opsview']['exclude_fs_type'] = %w(usbfs devpts devtmpfs binfmt_misc proc rootfs sysfs tmpfs)
 default['opsview']['optional_attributes'] = %w(MAC CHEFSERVER)
 

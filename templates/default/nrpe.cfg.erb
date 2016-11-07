@@ -12,7 +12,7 @@
 # LOG FACILITY
 # The syslog facility that should be used for logging purposes.
 
-log_facility=<%= node['opsview']['agent']['log_facility'] %>
+log_facility=<%= @log_facility %>
 
 
 
@@ -21,7 +21,7 @@ log_facility=<%= node['opsview']['agent']['log_facility'] %>
 # number.  The file is only written if the NRPE daemon is started by the root
 # user and is running in standalone mode.
 
-pid_file=<%= node['opsview']['agent']['pid_file'] %>
+pid_file=<%= @pid_file %>
 
 
 
@@ -30,7 +30,7 @@ pid_file=<%= node['opsview']['agent']['pid_file'] %>
 # NOTE: This must be a non-priviledged port (i.e. > 1024).
 # NOTE: This option is ignored if NRPE is running under either inetd or xinetd
 
-server_port=<%= node['opsview']['agent']['server_port'] %>
+server_port=<%= @server_port %>
 
 
 
@@ -39,7 +39,7 @@ server_port=<%= node['opsview']['agent']['server_port'] %>
 # and you do not want nrpe to bind on all interfaces.
 # NOTE: This option is ignored if NRPE is running under either inetd or xinetd
 
-server_address=<%= node['opsview']['agent']['server_address'] %>
+server_address=<%= @server_address %>
 
 
 
@@ -49,7 +49,7 @@ server_address=<%= node['opsview']['agent']['server_address'] %>
 #
 # NOTE: This option is ignored if NRPE is running under either inetd or xinetd
 
-nrpe_user=<%= node['opsview']['agent']['nrpe_user'] %>
+nrpe_user=<%= @nrpe_user %>
 
 
 
@@ -59,7 +59,7 @@ nrpe_user=<%= node['opsview']['agent']['nrpe_user'] %>
 #
 # NOTE: This option is ignored if NRPE is running under either inetd or xinetd
 
-nrpe_group=<%= node['opsview']['agent']['nrpe_group'] %>
+nrpe_group=<%= @nrpe_group %>
 
 
 
@@ -74,7 +74,7 @@ nrpe_group=<%= node['opsview']['agent']['nrpe_group'] %>
 #
 # NOTE: This option is ignored if NRPE is running under either inetd or xinetd
 
-allowed_hosts=<%= node['opsview']['agent']['allowed_hosts'] %>
+allowed_hosts=<%= @allowed_hosts %>
 
 
 
@@ -90,7 +90,7 @@ allowed_hosts=<%= node['opsview']['agent']['allowed_hosts'] %>
 #
 # Values: 0=do not allow arguments, 1=allow command arguments
 
-dont_blame_nrpe=<%= node['opsview']['agent']['dont_blame_nrpe'] %>
+dont_blame_nrpe=<%= @dont_blame_nrpe %>
 
 
 
@@ -120,7 +120,7 @@ dont_blame_nrpe=<%= node['opsview']['agent']['dont_blame_nrpe'] %>
 # syslog facility.
 # Values: 0=debugging off, 1=debugging on
 
-debug=<%= node['opsview']['agent']['debug'] %>
+debug=<%= @agent_debug %>
 
 
 
@@ -128,7 +128,7 @@ debug=<%= node['opsview']['agent']['debug'] %>
 # This specifies the maximum number of seconds that the NRPE daemon will
 # allow plugins to finish executing before killing them off.
 
-command_timeout=<%= node['opsview']['agent']['command_timeout'] %>
+command_timeout=<%= @command_timeout%>
 
 
 
@@ -139,7 +139,7 @@ command_timeout=<%= node['opsview']['agent']['command_timeout'] %>
 # all network sessions are connected. This causes the nrpe daemons to
 # accumulate, eating system resources. Do not set this too low.
 
-connection_timeout=<%= node['opsview']['agent']['connection_timeout'] %>
+connection_timeout=<%= @connection_timeout %>
 
 
 
@@ -152,14 +152,14 @@ connection_timeout=<%= node['opsview']['agent']['connection_timeout'] %>
 # be initialized and a warning will be issued.
 # Values: 0=only seed from /dev/[u]random, 1=also seed from weak randomness
 
-allow_weak_random_seed=<%= node['opsview']['agent']['allow_weak_random_seed'] %>
+allow_weak_random_seed=<%= @allow_weak_random_seed %>
 
 
 
 # INCLUDE CONFIG FILE
 # This directive allows you to include definitions from an external config file.
 
-<% node['opsview']['agent']['include_files'].each do |file| %>
+<% @include_files.each do |file| %>
 include=<%= file %>
 <% end %>
 
@@ -169,12 +169,12 @@ include=<%= file %>
 # This directive allows you to include definitions from config files (with a
 # .cfg extension) in one or more directories (with recursion).
 
-<% node['opsview']['agent']['include_dirs'].each do |dir| %>
+<% @include_dirs.each do |dir| %>
 include_dir=<%= dir %>
 <% end %>
 
 
-<% if node['opsview']['agent']['default_commands'] %>
+<% if @default_commands %>
 
 # COMMAND DEFINITIONS
 # Command definitions that this daemon will run.  Definitions
