@@ -6,12 +6,32 @@ provisioner:
   name: chef_zero
 
 platforms:
-  - name: ubuntu-12.04
+  - name: ubuntu-14.04
   - name: centos-6.8
-  - name: centos-7
+  - name: centos-7.2
   - name: windows2012r2
+    driver:
+      box: opentable/win-2012r2-standard-amd64-nocm
+
+verifier: inspec
 
 suites:
 - name: client
-  run_list: ["recipe[opsview_client_test::test]"]
-  attributes: { 'opsview' : { 'server_url' : 'uat.opsview.com' } }
+  run_list:
+    - recipe[opsview_client_test]
+  excludes:
+    - windows2012r2
+  attributes:
+    opsview:
+      client:
+        repo_key: <%= ENV['OPSVIEW_REPO_KEY'] %>
+
+- name: win_client
+  run_list:
+    - recipe[opsview_client_test]
+  includes:
+    - windows2012r2
+  attributes:
+    opsview:
+      client:
+        repo_key: <%= ENV['OPSVIEW_REPO_KEY'] %>

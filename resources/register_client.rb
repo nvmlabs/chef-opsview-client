@@ -21,22 +21,14 @@
 resource_name :opsview_rest_client
 
 property :device_title, String, name_attribute: true
-property :api_host, String, required: true
+property :device_name, String, default: lazy { node['hostname'] }
+property :api_url, String, required: true
 property :api_user, String, required: true
 property :api_password, String, required: true
-property :api_port, Fixnum, default: 80
-property :api_protocol, String, equal_to: %w(http https), default: lazy { 'http' }
+property :api_port, Fixnum, default: 443
+property :api_protocol, String, equal_to: %w(http https), default: 'https'
 property :ip, String, regex: [/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/], required: true
 property :agent_server_port, String, default: '5666'
-
-property :core_enabled, [TrueClass, FalseClass], default: true
-property :core_gpgcheck, [TrueClass, FalseClass], default: false
-property :core_gpgkey, [String, NilClass], default: nil
-property :core_repository_id, String, default: 'opsview-core'
-property :core_description, String, default: 'Opsview Core $basearch'
-property :core_baseurl, String, default: lazy {
-  "http://downloads.opsview.com/opsview-core/latest/yum/#{node['platform']}/$releasever/$basearch"
-}
 
 property :monitored_by, String, default: lazy { 'Master Monitoring Server' }
 
@@ -48,7 +40,7 @@ property :keywords, [Array, Hash], default: []
 property :reload_opsview, [TrueClass, FalseClass], default: true
 property :json_data, Hash
 property :api_token, String
-
+property :device_action, [String, NilClass], equal_to: %w{ add update }, default: NilClass
 
 # Check the OpsView Server to see the current state of the
 # Device
@@ -70,39 +62,34 @@ action :add_or_update do
   require 'json'
   require 'hashdiff'
 
-  if @current_resource.json_data.nil?
-    if resource_action == :update
-      Chef::Log.info("#{@new_resource.name} is not registered - skipping.")
-      return false
-    else
-      Chef::Log.info("#{@new_resource.name} is not registered - creating new registration.")
-      @new_resource.json_data(new_registration)
-      do_update = true
-    end
-  elsif resource_action == :add
-    Chef::Log.info("#{@new_resource.name} is already registered - skipping.")
-    return false
+  # Login
+  begin
+    @host = OpsviewRest.new(api_url, username: api_user, password: api_password)
+  rescue
+    raise 'RestClient OpsView Rest API error: ' + $ERROR_INFO.inspect
+  end
+  # Find host
+  host_json = host.find(type: 'host', name: device_name).to_json
+
+  # host_json will be empty if we can't find the device
+  if host_json == []
+    Chef::Log.debug("Didn't find the host creating: #{inspect}")
+    @new_resource.device_action = 'add' # Find a better way of doing this
+    update_device
   else
-    Chef::Log.debug("current_resource Before update_host_details: #{@current_resource.json_data.inspect}")
-    @new_resource.json_data(update_host_details(@current_resource.json_data))
-    Chef::Log.debug("new_resource After update_host_details: #{@new_resource.json_data.inspect}")
-    json_diff = HashDiff.diff(@current_resource.json_data, @new_resource.json_data)
-    do_update = !json_diff.empty? ? true : false
-    Chef::Log.info("#{@new_resource.name} updated: #{do_update} diff: #{json_diff.inspect}")
+    Chef::Log.debug("Found device #{device_name} updating")
+    @new_resource.device_action = 'update' # Find a better way of doing this
+    update_device
   end
 
-  if do_update
-    put_opsview_device
-
-    if @new_resource.reload_opsview
-      Chef::Log.info('Configured to reload opsview')
-      do_reload_opsview
-    else
-      Chef::Log.info('Configured NOT to reload opsview')
-    end
+  def update_device
+    @host.create(
+      name: @new_resource.device_name,
+      ip: @new_resource.ip,
+      hostgroup: @new_resource.hostgroup,
+      hosttemplates: @new_resource.hosttemplates,
+      type: 'host',
+      replace: @new_resource.device_action
+    )
   end
-
-  # do_update
-  # Call update action here
-
 end

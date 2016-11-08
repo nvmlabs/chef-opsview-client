@@ -20,9 +20,13 @@
 resource_name :opsview_client
 
 # Template Config
+property :name, String, name_property: true
+property :version, String, default: '22-06-15-2110'
+property :version_linux, String, default: 'latest'
+property :repo_key, String, required: true
 property :log_facility, String, default: 'daemon'
 property :pid_file, String, default: '/var/tmp/nrpe.pid'
-property :server_port, String, default: '443'
+property :server_port, String, default: '5666'
 property :server_address, String, default: '0.0.0.0'
 property :nrpe_user, String, default: 'nagios'
 property :nrpe_group, String, default: 'nagios'
@@ -32,9 +36,10 @@ property :agent_debug, String, equal_to: %w(0 1), default: '0'
 property :command_timeout, String, default: '60'
 property :connection_timeout, String, default: '300'
 property :allow_weak_random_seed, String, equal_to: %w(1 0), default: '1'
-property :include_dirs, Array, default: lazy { ["::File.join(#{linux_config_dir}, nrpe_local)"] }
+property :include_dirs, Array, default: lazy { ["#{linux_config_dir}/nrpe_local"] }
 property :include_files, Array, default: []
 property :default_commands, [TrueClass, FalseClass], default: true
+property :include_epel, [TrueClass, FalseClass], default: true
 
 property :manage_config, [TrueClass, FalseClass], default: true
 
@@ -50,14 +55,25 @@ property :linux_config_dir, String, default: '/usr/local/nagios/etc'
 # set to 'local' if you want to handle the package repo yourself
 property :installation_method, String, equal_to: %w(repo local), default: 'repo'
 property :yum_allow_downgrade, [TrueClass, FalseClass], default: false
+property :yum_enabled, [TrueClass, FalseClass], default: true
+property :yum_gpgcheck, [TrueClass, FalseClass], default: false
+property :yum_opsview_gpgkey, [String, NilClass], default: nil
+property :yum_description, String, default: 'Opsview Core $basearch'
+property :repository_key, String
+property :yum_baseurl, String, default: lazy {
+  "https://downloads.opsview.com/k/#{repository_key}/opsview-commercial/#{version_linux}/yum/#{node['platform']}/$releasever/$basearch"
+}
 
+property :apt_baseUrl, String, default: lazy {
+  "https://downloads.opsview.com/k/#{repository_key}/opsview-commercial/#{version_linux}/apt/"
+}
 # Windows
 property :windows_config_dir, String, default: 'C:\Program Files\Opsview Agent'
 # default to x64
 # Agent versions for 32bit platforms (4.6.3) do not match the latest release of
 # Opsview Monitor (5.2) but still maintain full compatibility.
-property :windows_download_url, String, default {
-  'https://opsview-agents.s3.amazonaws.com/Windows/Opsview_Windows_Agent_x64_22-06-15-2110.msi'
+property :windows_download_url, String, default: lazy {
+  "https://opsview-agents.s3.amazonaws.com/Windows/Opsview_Windows_Agent_x64_#{version}.msi"
 }
 
 default_action  :install
@@ -77,6 +93,7 @@ action :install do
       source 'NSC.ini.erb'
       notifies :restart, 'service[NSClientpp]'
       action manage_ncslient_config ? :create : :create_if_missing
+      cookbook 'opsview_client'
     end
 
     service 'NSClientpp' do
@@ -84,6 +101,23 @@ action :install do
     end
 
   when 'rhel'
+    if installation_method == 'repo'
+      yum_repository 'epel' do
+        mirrorlist 'http://mirrors.fedoraproject.org/mirrorlist?repo=epel-5&arch=$basearch'
+        description 'Extra Packages for Enterprise Linux 5 - $basearch'
+        enabled true
+        gpgcheck true
+        gpgkey 'http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL'
+      end
+
+      yum_repository 'opsview' do
+        description yum_description
+        gpgcheck yum_gpgcheck
+        gpgkey yum_opsview_gpgkey unless yum_opsview_gpgkey.nil?
+        baseurl yum_baseurl
+        enabled yum_enabled
+      end
+    end
 
     opsview_packages.each do |pkg, ver|
       package pkg do
@@ -100,6 +134,7 @@ action :install do
       mode '0444'
       user nrpe_user
       group nrpe_group
+      cookbook 'opsview_client'
       variables(
         log_facility: log_facility,
         pid_file: pid_file,
@@ -124,5 +159,14 @@ action :install do
     service 'opsview-agent' do
       action [:enable, :start]
     end
+  when 'debian'
+    apt_repository 'opsview' do
+      uri        apt_baseUrl
+      components ['main']
+    end
+    apt_update 'now' do
+      action :update
+    end
+    package 'opsview-agent'
   end
 end
