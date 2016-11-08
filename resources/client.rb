@@ -168,5 +168,33 @@ action :install do
       action :update
     end
     package 'opsview-agent'
+
+    template "#{linux_config_dir}/nrpe.cfg" do
+      source 'nrpe.cfg.erb'
+      mode '0444'
+      user nrpe_user
+      group nrpe_group
+      cookbook 'opsview_client'
+      variables(
+        log_facility: log_facility,
+        pid_file: pid_file,
+        server_port: server_port,
+        server_address: server_address,
+        nrpe_user: nrpe_user,
+        nrpe_group: nrpe_group,
+        allowed_hosts: allowed_hosts,
+        dont_blame_nrpe: dont_blame_nrpe,
+        agent_debug: agent_debug,
+        command_timeout: command_timeout,
+        connection_timeout: connection_timeout,
+        allow_weak_random_seed: allow_weak_random_seed,
+        include_dirs: include_dirs,
+        include_files: include_files,
+        default_commands: default_commands
+      )
+      notifies :restart, 'service[opsview-agent]'
+      action manage_config ? :create : :create_if_missing
+    end
+    
   end
 end

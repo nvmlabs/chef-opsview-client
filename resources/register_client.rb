@@ -28,7 +28,6 @@ property :api_password, String, required: true
 property :api_port, Fixnum, default: 443
 property :api_protocol, String, equal_to: %w(http https), default: 'https'
 property :ip, String, regex: [/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/], required: true
-property :agent_server_port, String, default: '5666'
 
 property :monitored_by, String, default: lazy { 'Master Monitoring Server' }
 
