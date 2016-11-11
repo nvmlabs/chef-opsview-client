@@ -1,12 +1,18 @@
 opsview_client Cookbook
 =======================
 This cookbook:
-- Opsview client
+- Installs the Opsview client
+- Sets-up repositories (Linux)
+- Installs Opsview agent 
+- Ensure Opsview agent service is enabled and started
 - Optionally registers the client with the server (TODO)
 
+Note: you can setup your own repoistory settings using the provider settings, see `resources/client.rb`. 
 
-Usage
------
+# Requirements
+- Chef 12.5+
+
+## Usage
 This cookbook provides custom resources using `opsview_client` & `opsview_rest_client`, include these in your own recipe as you would do with a template or directory resource
 
 #### `opsview_client`
@@ -33,8 +39,10 @@ If you wish to add extra config for NRPE, add your file to the following places:
 - Linux: `/usr/local/nagios/etc/nrpe_local`
 - Windows: `C:\Program Files\Opsview Agent\custom.ini`
 
-Contributing
-------------
+## Testing
+When testing Linux, set the environment variable `OPSVIEW_REPO_KEY` to your licence key obtained from opsview 
+
+## Contributing
 1. Fork the repository on Github
 2. Create a named feature branch (like `add_component_x`)
 3. Write your change
@@ -42,8 +50,7 @@ Contributing
 5. Run the tests, ensuring they all pass
 6. Submit a Pull Request using Github
 
-License and Authors
--------------------
+## License and Authors
 Authors:
   * Rob Coward (rob@coward-family.net)
   * Tenyo Grozev (tenyo.grozev@yale.edu)
