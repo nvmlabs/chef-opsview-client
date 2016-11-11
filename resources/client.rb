@@ -45,12 +45,15 @@ property :manage_config, [TrueClass, FalseClass], default: true
 
 # Windows
 property :manage_ncslient_config, [TrueClass, FalseClass], default: true
+property :windows_config_dir, String, default: 'C:\Program Files\Opsview Agent'
+# default to x64
+# Agent versions for 32bit platforms (4.6.3) do not match the latest release of
+# Opsview Monitor (5.2) but still maintain full compatibility.
+property :windows_download_url, String, default: lazy {
+  "https://opsview-agents.s3.amazonaws.com/Windows/Opsview_Windows_Agent_x64_#{version}.msi"
+}
 
 # Linux
-property :opsview_packages, Hash, default: {
-  'libmcrypt' => nil,
-  'opsview-agent' => nil
-}
 property :linux_config_dir, String, default: '/usr/local/nagios/etc'
 # set to 'local' if you want to handle the package repo yourself
 property :installation_method, String, equal_to: %w(repo local), default: 'repo'
@@ -63,17 +66,8 @@ property :repository_key, String
 property :yum_baseurl, String, default: lazy {
   "https://downloads.opsview.com/k/#{repository_key}/opsview-commercial/#{version_linux}/yum/#{node['platform']}/$releasever/$basearch"
 }
-
 property :apt_baseUrl, String, default: lazy {
   "https://downloads.opsview.com/k/#{repository_key}/opsview-commercial/#{version_linux}/apt/"
-}
-# Windows
-property :windows_config_dir, String, default: 'C:\Program Files\Opsview Agent'
-# default to x64
-# Agent versions for 32bit platforms (4.6.3) do not match the latest release of
-# Opsview Monitor (5.2) but still maintain full compatibility.
-property :windows_download_url, String, default: lazy {
-  "https://opsview-agents.s3.amazonaws.com/Windows/Opsview_Windows_Agent_x64_#{version}.msi"
 }
 
 default_action  :install
@@ -119,7 +113,8 @@ action :install do
       end
     end
 
-    opsview_packages.each do |pkg, ver|
+    %w(libmcrypt opsview-agent).each do
+      pkg
       package pkg do
         allow_downgrade yum_allow_downgrade
         action :install
@@ -195,6 +190,6 @@ action :install do
       notifies :restart, 'service[opsview-agent]'
       action manage_config ? :create : :create_if_missing
     end
-    
+
   end
 end

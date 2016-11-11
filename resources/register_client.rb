@@ -39,14 +39,14 @@ property :keywords, [Array, Hash], default: []
 property :reload_opsview, [TrueClass, FalseClass], default: true
 property :json_data, Hash
 property :api_token, String
-property :device_action, [String, NilClass], equal_to: %w{ add update }, default: NilClass
+property :device_action, [String, NilClass], equal_to: %w( add update ), default: NilClass
 
 # Check the OpsView Server to see the current state of the
 # Device
 def load_current_value
   @current_resource = Chef::Resource::OpsviewClient.new(@new_resource.name)
 
-  Opsview::Resource::opsview_token
+  Opsview::Resource.opsview_token
 
   @current_resource.json_data(opsview_device)
   if @current_resource.json_data.nil?
@@ -73,22 +73,20 @@ action :add_or_update do
   # host_json will be empty if we can't find the device
   if host_json == []
     Chef::Log.debug("Didn't find the host creating: #{inspect}")
-    @new_resource.device_action = 'add' # Find a better way of doing this
-    update_device
+    update_device(add)
   else
     Chef::Log.debug("Found device #{device_name} updating")
-    @new_resource.device_action = 'update' # Find a better way of doing this
-    update_device
+    update_device(update)
   end
 
-  def update_device
+  def update_device(add_or_update)
     @host.create(
       name: @new_resource.device_name,
       ip: @new_resource.ip,
       hostgroup: @new_resource.hostgroup,
       hosttemplates: @new_resource.hosttemplates,
       type: 'host',
-      replace: @new_resource.device_action
+      replace: add_or_update
     )
   end
 end
