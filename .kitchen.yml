@@ -28,7 +28,7 @@ suites:
 
 - name: win_client
   run_list:
-    - recipe[opsview_client_test]
+    - recipe[opsview_client_windows_test]
   includes:
     - windows2012r2
   attributes:
