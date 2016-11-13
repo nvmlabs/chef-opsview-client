@@ -50,6 +50,8 @@ GEM
       mixlib-shellout (~> 2.0)
     cleanroom (1.0.0)
     coderay (1.1.1)
+    cookstyle (0.0.1)
+      rubocop (= 0.39.0)
     cucumber-core (2.0.0)
       backports (~> 3.6)
       gherkin (~> 4.0)
@@ -252,6 +254,7 @@ PLATFORMS
 
 DEPENDENCIES
   berkshelf (~> 5.2.0)
+  cookstyle
   foodcritic (= 8.1.0)
   inspec (= 1.4.0)
   kitchen-inspec
