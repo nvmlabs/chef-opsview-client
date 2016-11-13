@@ -15,6 +15,7 @@ platforms:
 verifier:
   name: inspec
 
+suites:        
 - name: win_client
   run_list:
     - recipe[opsview_client_test]
