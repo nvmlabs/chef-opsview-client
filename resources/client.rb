@@ -19,11 +19,12 @@
 
 resource_name :opsview_client
 
-# Template Config
 property :name, String, name_property: true
 property :version, String, default: '22-06-15-2110'
 property :version_linux, String, default: 'latest'
 property :repo_key, String, required: true
+
+# Template configuration
 property :log_facility, String, default: 'daemon'
 property :pid_file, String, default: '/var/tmp/nrpe.pid'
 property :server_port, String, default: '5666'
@@ -31,7 +32,7 @@ property :server_address, String, default: '0.0.0.0'
 property :nrpe_user, String, default: 'nagios'
 property :nrpe_group, String, default: 'nagios'
 property :allowed_hosts, String, default: '127.0.0.1'
-property :dont_blame_nrpe, String, equal_to: %w(0 1), default: '1'
+property :dont_blame_nrpe, String, equal_to: %w(0 1), default: '0'
 property :agent_debug, String, equal_to: %w(0 1), default: '0'
 property :command_timeout, String, default: '60'
 property :connection_timeout, String, default: '300'
@@ -39,12 +40,10 @@ property :allow_weak_random_seed, String, equal_to: %w(1 0), default: '1'
 property :include_dirs, Array, default: lazy { ["#{linux_config_dir}/nrpe_local"] }
 property :include_files, Array, default: []
 property :default_commands, [TrueClass, FalseClass], default: true
-property :include_epel, [TrueClass, FalseClass], default: true
 
 property :manage_config, [TrueClass, FalseClass], default: true
 
 # Windows
-property :manage_ncslient_config, [TrueClass, FalseClass], default: true
 property :windows_config_dir, String, default: 'C:\Program Files\Opsview Agent'
 # default to x64
 # Agent versions for 32bit platforms (4.6.3) do not match the latest release of
@@ -86,8 +85,8 @@ action :install do
     template ::File.join(windows_config_dir, 'NSC.ini') do
       source 'NSC.ini.erb'
       notifies :restart, 'service[NSClientpp]'
-      action manage_ncslient_config ? :create : :create_if_missing
       cookbook 'opsview_client'
+      only_if { manage_config }
     end
 
     service 'NSClientpp' do
@@ -148,7 +147,7 @@ action :install do
         default_commands: default_commands
       )
       notifies :restart, 'service[opsview-agent]'
-      action manage_config ? :create : :create_if_missing
+      only_if { manage_config }
     end
 
     service 'opsview-agent' do
@@ -159,9 +158,11 @@ action :install do
       uri        apt_baseUrl
       components ['main']
     end
+
     apt_update 'now' do
       action :update
     end
+
     package 'opsview-agent'
 
     template "#{linux_config_dir}/nrpe.cfg" do
@@ -188,8 +189,11 @@ action :install do
         default_commands: default_commands
       )
       notifies :restart, 'service[opsview-agent]'
-      action manage_config ? :create : :create_if_missing
+      only_if { manage_config }
     end
 
+    service 'opsview-agent' do
+      action [:enable, :start]
+    end
   end
 end
