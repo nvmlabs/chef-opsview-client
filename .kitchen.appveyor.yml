@@ -10,7 +10,7 @@ provisioner:
   name: chef_zero
 
 platforms:
-  - name: windows-2012R2
+  - name: windows-2012r2
 
 verifier:
   name: inspec
@@ -18,5 +18,3 @@ verifier:
 - name: win_client
   run_list:
     - recipe[opsview_client_test]
-  includes:
-    - windows2012r2
