@@ -28,7 +28,6 @@ end
 ```ruby
 opsview_client 'bob' do
   allowed_hosts '192.1680.200'
-  include_epel true
   repository_key 'super-long-key-from-opsview'
 end
 ```
