@@ -2,7 +2,7 @@ machine:
   ruby:
     version: 2.3.1
   environment:
-    KITCHEN_YAML: ~/chef-opsview-agent/.kitchen.circle.yml
+    KITCHEN_YAML: ~/chef-opsview-client/.kitchen.circle.yml
 
 test:
   post:
