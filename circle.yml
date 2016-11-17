@@ -9,7 +9,7 @@ machine:
 
 dependencies:
   pre:
-    - sudo usermod -p "`openssl passwd -1 'circle'`" circle
+    - sudo usermod -p "`openssl passwd -1 'circle'`" ubuntu
 
 test:
   post:
