@@ -1,0 +1,22 @@
+driver:
+  name: proxy
+  host: localhost
+  reset_command: "exit 0"
+
+provisioner:
+  name: chef_zero
+
+platforms:
+  - name: ubuntu-14.04
+
+verifier: inspec
+
+suites:
+- name: client
+  run_list:
+    - recipe[opsview_client_test]
+  attributes:
+    opsview:
+      client:
+        repo_key: <%= ENV['OPSVIEW_REPO_KEY'] %>
+

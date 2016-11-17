@@ -4,6 +4,8 @@ DEPENDENCIES
     metadata: true
   opsview_client_test
     path: test/fixtures/cookbooks/opsview_client_test
+  opsview_client_windows_test
+    path: test/fixtures/cookbooks/opsview_client_windows_test
 
 GRAPH
   build-essential (7.0.2)
@@ -16,10 +18,11 @@ GRAPH
     seven_zip (>= 0.0.0)
   opsview_client (1.0.6)
     build-essential (>= 0.0.0)
-    windows (>= 0.0.0)
     yum (>= 0.0.0)
     yum-epel (>= 0.0.0)
   opsview_client_test (0.0.1)
+    opsview_client (>= 0.0.0)
+  opsview_client_windows_test (0.0.1)
     opsview_client (>= 0.0.0)
   seven_zip (2.0.2)
     windows (>= 1.2.2)

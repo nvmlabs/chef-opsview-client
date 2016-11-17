@@ -1,0 +1,11 @@
+machine:
+  ruby:
+    version: 2.3.1
+  environment:
+    KITCHEN_YAML: .kitchen.circle.yml
+
+test:
+  post:
+    - bundle exec rake style
+    - bundle exec kitchen test client-ubuntu-1404
+            
