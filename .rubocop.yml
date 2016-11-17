@@ -13,5 +13,6 @@ AllCops:
     - Guardfile
     - metadata.rb
     - spec/unit/test_spec.rb
+    - vendor/**/*
 
 
