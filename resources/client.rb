@@ -112,7 +112,7 @@ action :install do
       end
     end
 
-    %w(libmcrypt opsview-agent).each do | pkg |
+    %w(libmcrypt opsview-agent).each do |pkg|
       package pkg do
         allow_downgrade yum_allow_downgrade
         action :install
