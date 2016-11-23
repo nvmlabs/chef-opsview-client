@@ -1,4 +1,12 @@
-language: ruby
+addons:
+  apt:
+    sources:
+      - chef-current-trusty
+    packages:
+      - chefdk
+
+# Don't `bundle install` which takes about 1.5 mins
+install: echo "skip bundle install"
 
 env:
   global:
@@ -7,15 +15,21 @@ env:
     - machine_port=22
     - KITCHEN_YAML=.kitchen.circle.yml
 
-rvm:
-  - 2.3.1
-
-sudo: required
-dist: trusty
+sudo: false 
 
 before_install:
   - sudo usermod -p "`openssl passwd -1 'travis'`" travis
 
-script:
-  - bundle exec rake
-  - bundle exec kitchen verify ubuntu
+before_script:
+  - eval "$(/opt/chefdk/bin/chef shell-init bash)"
+  # We have to install chef-sugar for ChefSpec
+  - /opt/chefdk/embedded/bin/chef gem install chef-sugar
+
+before_script:
+  - /opt/chefdk/embedded/bin/chef --version
+  - /opt/chefdk/embedded/bin/cookstyle --version
+  - /opt/chefdk/embedded/bin/foodcritic --version
+  - /opt/chefdk/bin/chef exec rake
+  - /opt/chefdk/bin/chef exec kitchen verify ubuntu
+
+script: KITCHEN_LOCAL_YAML=.kitchen.docker.yml /opt/chefdk/embedded/bin/kitchen verify ${INSTANCE}
