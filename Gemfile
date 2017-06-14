@@ -1,19 +1,11 @@
 source 'https://rubygems.org'
 
-gem 'berkshelf'
-
-group :development do
-	gem 'test-kitchen'
-	gem 'kitchen-vagrant'
-	gem 'guard'
-	gem 'guard-kitchen'
-	gem 'wdm'
-	gem 'foodcritic'
-	gem 'guard-foodcritic'
-	#gem 'ci_reporter'
-	gem 'guard-rspec'
-	gem 'chefspec'
-	gem 'webmock'
-	gem 'hashdiff'
-	gem 'rest-client'
-end
+gem 'rake'
+gem 'foodcritic', '= 8.1.0'
+gem 'rubocop', '= 0.39.0'
+gem 'inspec', '= 1.4.0'
+gem 'kitchen-inspec'
+gem 'test-kitchen'
+gem 'berkshelf', '~> 5.2.0'
+gem 'stove'
+gem 'cookstyle'

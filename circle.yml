@@ -1,0 +1,17 @@
+machine:
+  ruby:
+    version: 2.3.1
+  environment:
+    KITCHEN_YAML: ~/chef-opsview-client/.kitchen.circle.yml
+    machine_user: circle
+    machine_pass: circle
+    machine_port: 22
+
+dependencies:
+  pre:
+    - sudo usermod -p "`openssl passwd -1 'circle'`" ubuntu
+
+test:
+  post:
+    - bundle exec rake style
+    - bundle exec kitchen test client-ubuntu-1404
